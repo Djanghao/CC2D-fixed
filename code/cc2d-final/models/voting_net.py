@@ -5,7 +5,7 @@ import torch.nn.functional as F
 
 import torchvision
 
-VGG = torchvision.models.vgg19
+from .network import vgg19
 
 class UNet_Voting(nn.Module):
     def __init__(self, n_channels, n_classes, non_local=False):
@@ -14,7 +14,8 @@ class UNet_Voting(nn.Module):
         self.n_classes = n_classes
         bilinear = True
 
-        self.vgg =  VGG(pretrained=True)
+        self.vgg = vgg19(pretrained=True)
+        
         self.up1 = Up(1024, 256, bilinear)
         self.up2 = Up(512, 128, bilinear)
         self.up3 = Up(256, 64, bilinear)
@@ -31,7 +32,8 @@ class UNet_Voting(nn.Module):
         self.final = nn.Conv2d(64, self.n_classes*3, kernel_size=1, padding=0)
 
     def forward(self, x):
-        _, features = self.vgg.features(x, get_features=True)
+        _, features = self.vgg.forward(x, get_features=True)
+        
 
         if self.non_local:
             features[4] = self.non_local_5(features[4])
