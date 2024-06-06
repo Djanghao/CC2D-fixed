@@ -72,20 +72,32 @@ class Hand_Base(data.Dataset):
         li = list(self.labels.loc[int(name), :])
         r1, r2 = [i/j for i, j in zip(self.size, origin_size)]
         points = [tuple([round(li[i+1]*r1), round(li[i]*r2)])
-                  for i in range(0, len(li), 2)]
-        points
-        return points
+                  for i in range(0, len(li), 2)] # origin_size -> resize_size
+        origin_points = [tuple([li[i+1], li[i]]) for i in range(0, len(li), 2)]
+        return points, origin_points
     
-    def compute_spacing(self, gt):
-        
+    # ! deprecated
+    def compute_spacing_(self, gt):
         physical_factor = WRIST_WIDTH/radial(gt[0], gt[4])
         return [physical_factor, physical_factor]
     
+    def compute_spacing(self, points, origin_points, origin_size):
+        physical_factor = WRIST_WIDTH/radial(origin_points[0], origin_points[4]) # true_size / resize_size
+        physical_factor_y = physical_factor * (origin_size[0] / self.size[0])
+        physical_factor_x = physical_factor * (origin_size[1] / self.size[1])
+        return [physical_factor_y, physical_factor_x]
 
-    def _get_landmark_gt(self, name, origin_size, get_scale_rate=False):
+    # ! deprecated
+    def _get_landmark_gt_(self, name, origin_size, get_scale_rate=False):
         points = self.readLandmark(name, origin_size)
         if not get_scale_rate: return points
         scale_rate = self.compute_spacing(points)
+        return points, scale_rate
+    
+    def _get_landmark_gt(self, name, origin_size, get_scale_rate=False):
+        points, origin_points = self.readLandmark(name, origin_size)
+        if not get_scale_rate: return points
+        scale_rate = self.compute_spacing(points, origin_points, origin_size)
         return points, scale_rate
 
     def get_landmark_gt(self, name, origin_size=None, get_scale_rate=False):
