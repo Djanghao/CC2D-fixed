@@ -96,7 +96,9 @@ class Tester(object):
         self.Radius = dataset_1.Radius
 
         img_dict = dict()
-        for img, _, __, ___, landmark_list, id_str, scale_rate in tqdm(self.dataloader_1):
+        disable_tqdm = True
+        # for img, _, __, ___, landmark_list, id_str, scale_rate in tqdm(self.dataloader_1):
+        for img, _, __, ___, landmark_list, id_str, scale_rate in tqdm(self.dataloader_1, disable=disable_tqdm):
             img = img.cuda()
             id_str = id_str[0]
 
@@ -260,7 +262,9 @@ if __name__ == "__main__":
                                   size=cfg.train.input_size, pseudo=False)
         dataloader = DataLoader(dataset, batch_size=cfg.train.batch_size,
                     drop_last=True, shuffle=True, num_workers=cfg.train.num_workers)
-        for img, mask, offset_y, offset_x, landmark_list, _, __ in tqdm(dataloader):
+        
+        disable_tqdm = True
+        for img, mask, offset_y, offset_x, landmark_list, _, __ in tqdm(dataloader, disable=disable_tqdm):
 
 
             img, mask, offset_y, offset_x = img.cuda(), \
