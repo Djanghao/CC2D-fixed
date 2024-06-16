@@ -44,7 +44,7 @@ class Hand_Base(data.Dataset):
         elif mode == 'Oneshot':
             self.indexes = files[id_shot:id_shot+1]
         else:
-            raise Exception("Unknown phase: {phase}".fomrat(phase=mode))
+            raise Exception("Unknown phase: {phase}".format(phase=mode))
         
         self.list = [{'ID': "{}".format(i)} for i in self.indexes]
 

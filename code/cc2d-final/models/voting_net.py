@@ -47,7 +47,7 @@ class UNet_Voting(nn.Module):
 
         x = self.final(x)
         
-        heatmap = F.sigmoid(x[:,:self.n_classes,:,:])
+        heatmap = F.sigmoid(x[:,:self.n_classes,:,:]) # [bs, n_classes*3, h, w] -> [bs, n_classes, h, w]
         regression_x = x[:,self.n_classes:2*self.n_classes,:,:]
         regression_y = x[:,2*self.n_classes:,:,:]
 

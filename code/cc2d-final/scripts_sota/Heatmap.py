@@ -324,6 +324,7 @@ if __name__ == "__main__":
         #             format(epoch, sum(logic_loss_list) / tester.dataset.__len__()))
         # # save model
         if (epoch + 1) % cfg.train.save_seq == 0:
+            logger.info("Epoch {} Testing Heatmap Argmax".format(epoch))
             # logger.info(runs_dir + "/model_epoch_{}.pth".format(epoch))
             # torch.save(net.state_dict(), runs_dir + "/model_epoch_{}.pth".format(epoch))
 
@@ -348,4 +349,4 @@ if __name__ == "__main__":
     # Test
     ema_net.eval()
     # import ipdb; ipdb.set_trace()
-    tester.test(ema_net, mode='Infer_train')
+    tester.test(ema_net, mode='Infer_Train')
