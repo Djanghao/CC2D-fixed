@@ -98,7 +98,7 @@ class Tester(object):
         self.Radius = dataset_1.Radius
 
         img_dict = dict()
-        for img, _, __, ___, landmark_list, id_str, scale_rate in tqdm(self.dataloader_1):
+        for img, _, __, ___, landmark_list, id_str, scale_rate in tqdm(self.dataloader_1, disable=True):
             img = img.cuda()
             id_str = id_str[0]
 
@@ -215,12 +215,12 @@ if __name__ == "__main__":
     logger.info(cfg)
 
     # net = UNet(3, config['num_landmarks'])
-    net = UNet_Voting(3, cfg.dataset.num_landmarks, non_local=False)
+    net = UNet_Voting(3, cfg.dataset.num_landmarks, non_local=True)
     net = torch.nn.DataParallel(net)
     net = net.cuda()
     # logger.info(net)
 
-    ema_net = UNet_Voting(3, cfg.dataset.num_landmarks, non_local=False)
+    ema_net = UNet_Voting(3, cfg.dataset.num_landmarks, non_local=True)
     ema_net = torch.nn.DataParallel(ema_net)
     ema_net = ema_net.cuda()
     for param in ema_net.parameters():
@@ -277,7 +277,7 @@ if __name__ == "__main__":
         dataset.__getitem__(0)
         dataloader = DataLoader(dataset, batch_size=4,
                     drop_last=True, shuffle=True, num_workers=cfg.train.num_workers)
-        for img, mask, offset_y, offset_x, landmark_list, _, __ in tqdm(dataloader):
+        for img, mask, offset_y, offset_x, landmark_list, _, __ in tqdm(dataloader, disable=True):
             # for _ in range(19):
             #     gray_to_PIL(shot_mask[0][_]).save('test.jpg')
             #     import ipdb; ipdb.set_trace()
@@ -333,7 +333,7 @@ if __name__ == "__main__":
             # tester.test(net, epoch=epoch)
 
             logger.info(runs_dir + "/model.pth")
-            torch.save(ema_net.state_dict(), runs_dir + "/model.pth")
+            torch.save(ema_net.state_dict(), runs_dir + f"/model{epoch}.pth")
 
             cfg.train.last_epoch = epoch
             ema_net.eval()
