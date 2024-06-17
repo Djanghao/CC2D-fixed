@@ -8,6 +8,7 @@ from PIL import Image
 from copy import deepcopy
 from .augment import cc_augment, augment_patch, to_PIL, gray_to_PIL
 from utils import radial
+import cv2
 
 WRIST_WIDTH = 50
 
@@ -55,18 +56,28 @@ class Hand_Base(data.Dataset):
         transformList.append(normalize)
         self.transform = transforms.Compose(transformList)
 
-        self.images = {item['ID']: Image.open(os.path.join(self.pth_Image, item['ID']+'.jpg')).convert('RGB')\
-            for item in self.list}
+        hist = True
+        if not hist:
+            self.images = {item['ID']: Image.open(os.path.join(self.pth_Image, item['ID']+'.jpg')).convert('RGB')\
+                for item in self.list}
+        else:
+            self.images = {item['ID']: self.equalize_hist_transform(os.path.join(self.pth_Image, item['ID']+'.jpg')) for item in self.list}
         
         self.gts = {item['ID']: self._get_landmark_gt(item['ID'], self.images[item['ID']].size[::-1])\
             for item in self.list}
-        
         
         self.scale_rates = {item['ID']: self._get_landmark_gt(item['ID'], self.images[item['ID']].size[::-1], True)[1]\
             for item in self.list}
 
     def __len__(self):
         return len(self.list)
+                
+    def equalize_hist_transform(self, image_path):
+        image_cv = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+        image_eq = cv2.equalizeHist(image_cv)
+        image_rgb = cv2.cvtColor(image_eq, cv2.COLOR_GRAY2RGB)
+        image_pil = Image.fromarray(image_rgb)
+        return image_pil
 
     def readLandmark(self, name, origin_size):
         li = list(self.labels.loc[int(name), :])
@@ -77,7 +88,7 @@ class Hand_Base(data.Dataset):
         return points, origin_points
     
     # ! deprecated
-    def compute_spacing_(self, gt):
+    def compute_spacing_deprecated(self, gt):
         physical_factor = WRIST_WIDTH/radial(gt[0], gt[4])
         return [physical_factor, physical_factor]
     
@@ -88,7 +99,7 @@ class Hand_Base(data.Dataset):
         return [physical_factor_y, physical_factor_x]
 
     # ! deprecated
-    def _get_landmark_gt_(self, name, origin_size, get_scale_rate=False):
+    def _get_landmark_gt_deprecated(self, name, origin_size, get_scale_rate=False):
         points = self.readLandmark(name, origin_size)
         if not get_scale_rate: return points
         scale_rate = self.compute_spacing(points)
@@ -247,7 +258,9 @@ class Hand_TPL_Heatmap(Hand_Base):
 
         self.ssl_dir = ssl_dir
         self.do_repeat = do_repeat
-        self.Radius = int(max(size) * R_ratio)
+        # self.Radius = int(max(size) * R_ratio)
+        self.sigma = 8
+        self.Radius = 3 * self.sigma
         self.pseudo = pseudo
 
         # gen mask
@@ -260,7 +273,7 @@ class Hand_TPL_Heatmap(Hand_Base):
                     mask[i][j] = 1
                     # for guassian mask
                     guassian_mask[i][j] = math.exp(- math.pow(distance, 2) /\
-                        math.pow(self.Radius, 2))
+                        2 * math.pow(self.sigma, 2))
         self.mask = mask
         self.guassian_mask = guassian_mask
 
@@ -286,7 +299,7 @@ class Hand_TPL_Heatmap(Hand_Base):
             temp = self.list.copy() 
             for _ in range(self.num_repeat):
                 self.list.extend(temp)
-
+    
     def __getitem__(self, index):
         item = self.list[index]
 
